@@ -1,0 +1,155 @@
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+		this.state = {
+			breakLength: 5,
+			sessionLength: 25,
+			sessionTime: 1500,
+			breakTime: 300,
+			isRunning: false,
+			startOrStop: "Start",
+			mode: "Session"
+		};
+		this.timer = 0;
+  }
+	timeFormat() {
+		if (this.state.mode === "Session") {
+			let minutes = Math.floor(this.state.sessionTime / 60);
+    	let seconds = this.state.sessionTime - minutes * 60;
+		}
+		else if (this.state.mode === "Break") {
+			let minutes = Math.floor(this.state.breakTime / 60);
+    	let seconds = this.state.breakTime - minutes * 60;
+		}
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    return minutes + ':' + seconds;
+  }
+	
+	initialize = () => {
+		clearInterval(this.timer);
+		this.setState({
+			breakLength: 5,
+			sessionLength: 25,
+			sessionTime: 1500,
+			breakTime: 300,
+			timer: 0,
+			isRunning: false,
+			startOrStop: "Start",
+			mode: "Session"
+		});
+		this.audioBeep.pause();
+		this.audioBeep.currentTime = 0;
+	}
+
+	breakIncrement = () => {
+		if (this.state.breakLength === 60) {return}
+		this.setState({
+			breakLength: this.state.breakLength + 1,
+			breakTime: this.state.breakTime + 60
+		});
+	}
+	breakDecrement = () => {
+		if (this.state.breakLength === 1) {return}
+		this.setState({
+			breakLength: this.state.breakLength - 1,
+			breakTime: this.state.breakTime - 60
+		});
+	}
+	sessionIncrement = () => {
+		if (this.state.sessionLength === 60) {return}
+		this.setState({
+			sessionLength: this.state.sessionLength + 1,
+			sessionTime: this.state.sessionTime + 60
+		});
+	}
+	sessionDecrement = () => {
+		if (this.state.sessionLength === 1) {return}
+		this.setState({
+			sessionLength: this.state.sessionLength - 1,
+			sessionTime: this.state.sessionTime - 60
+		});
+	}
+	countDown = () => {
+		if (this.state.mode === "Session") {
+			this.setState({
+				sessionTime: this.state.sessionTime - 1
+			});
+			if (this.state.sessionTime === -1) {
+        this.audioBeep.play();
+				clearInterval(this.timer);
+				this.setState({
+					mode: "Break",
+					breakTime: this.state.breakLength * 60,
+					isRunning: false,
+				});
+				this.startStop();
+			}
+		}
+		else if (this.state.mode === "Break") {
+			this.setState({
+				breakTime: this.state.breakTime - 1
+			});
+			if (this.state.breakTime === -1) {
+				clearInterval(this.timer);
+				this.setState({
+					mode: "Session",
+					sessionTime: this.state.sessionLength * 60,
+					isRunning: false,
+				});
+				this.startStop();
+			}
+		}
+	}
+
+	startStop = () => {
+		if (this.state.isRunning) {
+			this.setState({
+				isRunning: false,
+				startOrStop: "Start"
+			});
+			clearInterval(this.timer);
+		}
+		else {
+			this.setState({
+				isRunning: true, 
+				startOrStop: "Stop"
+			});
+			this.timer = setInterval(this.countDown, 1000);
+		}
+	}
+	
+	render() {	
+    return (
+			<div>
+				<h1>Pomodoro Clock</h1>
+				<div id="control">
+					<div id="break">
+						<div id="break-label">Break Length</div>
+						<button id="break-decrement" onClick={this.breakDecrement}>-</button>
+						<span id="break-length">{this.state.breakLength}</span>
+						<button id="break-increment" onClick={this.breakIncrement}>+</button>
+					</div>
+					<div id="session">
+						<div id="session-label">Session Length</div>
+						<button id="session-decrement" onClick={this.sessionDecrement}>-</button>
+						<span id="session-length">{this.state.sessionLength}</span>
+						<button id="session-increment" onClick={this.sessionIncrement}>+</button>
+					</div>
+				</div>
+				<div id="timer">
+					<div id="timer-label">{this.state.mode}</div>
+					<div id="time-left">{this.timeFormat()}</div>
+				</div>
+				<button id="start_stop" className="btn" onClick={this.startStop}>{this.state.startOrStop}</button>
+				<button id="reset" className="btn" onClick={this.initialize}>Reset</button>
+				<audio id="beep" preload="auto" 
+          src="https://goo.gl/65cBl1"
+          ref={(audio) => {this.audioBeep = audio;}} />
+			</div>
+		);
+	}
+}
+	
+	
+ReactDOM.render(<App />, document.getElementById('app'));
